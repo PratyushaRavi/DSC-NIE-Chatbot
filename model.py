@@ -1,26 +1,21 @@
 import torch
 import torch.nn as nn
-
-
+total_words = 100
+embed_dim = 7
 class NeuralNet(nn.Module):
-    def __init__(self, input_size, hidden_size, num_classes):
+    def __init__(self,embed_dim,hidden_size,no_class):
         super(NeuralNet, self).__init__()
-        self.l1 = nn.Linear(input_size, hidden_size *8)
-        self.l2 = nn.Linear(hidden_size*8, hidden_size*4)
-        self.l3 = nn.Linear(hidden_size*4, hidden_size*2)
-        self.l4 = nn.Linear(hidden_size*2, hidden_size)
-        self.l5 = nn.Linear(hidden_size, num_classes)
+        self.embed = nn.Embedding(total_words, embed_dim, padding_idx=0)
+        self.lstm = nn.LSTM(input_size = embed_dim, hidden_size =hidden_size,num_layers = 1, batch_first =True, bidirectional=True)
+        self.l1 = nn.Linear(hidden_size *2, hidden_size)
         self.relu = nn.ReLU()
-
+        self.l2 = nn.Linear(hidden_size , no_class)
 
     def forward(self, x):
-        out = self.l1(x)
+        out = self.embed(x)
+        lstm_out, (ht, ct) = self.lstm(out)
+        hidden = torch.cat((ht[-2, :, :], ht[-1, :, :]), dim=1)
+        out = self.l1(hidden)
         out = self.relu(out)
         out = self.l2(out)
-        out = self.relu(out)
-        out = self.l3(out)
-        out = self.relu(out)
-        out = self.l4(out)
-        out = self.relu(out)
-        out = self.l5(out)
         return out
