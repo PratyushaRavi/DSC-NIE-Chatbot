@@ -2,7 +2,7 @@ from torch.utils.data import DataLoader,Dataset
 import json
 import torch
 from utils import preprocesss_text,word_dict,bag_of_word
-from model import NeuralNet
+from asd import NeuralNet
 
 with open ('data.json','r') as f:
     chats = json.load(f)
@@ -27,6 +27,9 @@ for sentence,clas in train:
     y_train.append(clas)
 
 
+
+
+
 class ChatDataset(Dataset):
     def __init__(self):
         self.no_samples = len(x_train)
@@ -41,24 +44,24 @@ class ChatDataset(Dataset):
 
 #############Hyperparameters############
 batch_size = 16
-inp_size = len(x_train[0])
+embed_dim = 64
 hidden_dim = 16
 no_class = len(tags)
 device = 'cuda'
 lr = 0.002
-no_epoch = 1000
+no_epoch = 500
 
 dataset = ChatDataset()
 train_loader = DataLoader(dataset,batch_size=batch_size,shuffle=True)
 
-model = NeuralNet(inp_size,hidden_dim,no_class).to(device)
+model = NeuralNet(embed_dim,hidden_dim,no_class).to(device)
 
 criterion = torch.nn.CrossEntropyLoss()
 optimizer =  torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
 
 for epoch in range(no_epoch):
     for (words,label) in train_loader:
-        words = words.float().to(device)
+        words = words.to(torch.int64).to(device)
         labels = label.to(device)
         # print(type(words))
         #forward pass
@@ -77,7 +80,7 @@ print(f'final loss , loss={loss.item():.4f}')
 
 data ={
     "model_state":model.state_dict(),
-    "input_size":inp_size,
+    "embed_dim":embed_dim,
     "output_size":no_class,
     "hidden_dim": hidden_dim,
     "all_words":allwords_dictionary,
