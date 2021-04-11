@@ -4,8 +4,8 @@ from nltk.stem.porter import PorterStemmer
 stemmer = PorterStemmer()
 punctuans = ['!', ',', '$', '.','?',"'"]
 
-def preprocesss_text(sentence):
-    tokens =  nltk.wordpunct_tokenize(sentence)                        #tokenisze
+def preprocesss_text(sent):
+    tokens =  nltk.wordpunct_tokenize(sent)                        #tokenisze
     stemmed = [stemmer.stem(word.lower()) for word in tokens]          #stem it
     return [words for words in stemmed if words not in punctuans]
 
@@ -28,7 +28,7 @@ def bag_of_word(tokenize_sen,wordict):
 
 
 
-# senten = "I's anyone there?"
+
 # allwords = ['hey','nice','talk','to','you','ffs','hug']
 # prep = (preprocesss_text(senten))
 # print(prep)
