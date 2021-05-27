@@ -2,7 +2,7 @@ from torch.utils.data import DataLoader,Dataset
 import json
 import torch
 from utils import preprocesss_text,word_dict,bag_of_word
-from asd import NeuralNet
+from model import NeuralNet
 
 with open ('data.json','r') as f:
     chats = json.load(f)
@@ -14,19 +14,23 @@ train = []
 for idx,intent in enumerate(chats['intents']):
     tags.append(intent['tag'])
     for pattern in intent['patterns']:
+        # print(pattern)
         pattern = preprocesss_text(pattern)
         all_words.extend(pattern)
-        all_words = list(set(all_words))
         train.append((pattern,idx))
 
+
+all_words = list(set(all_words))
+all_words = [ word for word in all_words if len(word) >1] #removing single letters
+total_words = len(all_words) + 1
+print(total_words)
 x_train = []
 y_train = []
 allwords_dictionary = word_dict(all_words)
+
 for sentence,clas in train:
     x_train.append(bag_of_word(sentence,allwords_dictionary))
     y_train.append(clas)
-
-
 
 
 
@@ -54,7 +58,7 @@ no_epoch = 500
 dataset = ChatDataset()
 train_loader = DataLoader(dataset,batch_size=batch_size,shuffle=True)
 
-model = NeuralNet(embed_dim,hidden_dim,no_class).to(device)
+model = NeuralNet(total_words,embed_dim,hidden_dim,no_class).to(device)
 
 criterion = torch.nn.CrossEntropyLoss()
 optimizer =  torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
@@ -63,6 +67,7 @@ for epoch in range(no_epoch):
     for (words,label) in train_loader:
         words = words.to(torch.int64).to(device)
         labels = label.to(device)
+        # print(labels.dtype)
         # print(type(words))
         #forward pass
         output = model(words)
@@ -80,6 +85,7 @@ print(f'final loss , loss={loss.item():.4f}')
 
 data ={
     "model_state":model.state_dict(),
+    "total_words" : total_words,
     "embed_dim":embed_dim,
     "output_size":no_class,
     "hidden_dim": hidden_dim,
